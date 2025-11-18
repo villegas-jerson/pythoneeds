@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="w3-row-padding">
+
+  <!-- LEFT SIDE: STUDENT FORM -->
+  <div class="w3-third">
+    <div class="w3-card-4 w3-container w3-padding">
+
+      <fieldset>
+        <legend><b>STUDENT INFORMATION</b></legend>
+
+        <form method="POST" action="{{ url_for('save_student') }}" enctype="multipart/form-data">
+
+          <center>
+            {% if edit_student and edit_student['image'] %}
+              <img id="snapshot" src="{{ url_for('static', filename='uploads/' ~ edit_student['image']) }}" width="150" height="150">
+            {% else %}
+              <img id="snapshot" src="{{ url_for('static', filename='images/account.png') }}" width="150" height="150">
+            {% endif %}
+          </center>
+
+          <input type="hidden" name="original_idno" value="{{ edit_student['idno'] if edit_student else '' }}">
+
+          <p>
+            <label><b>IDNO</b></label>
+            <input type="number" name="idno" value="{{ edit_student['idno'] if edit_student else '' }}" class="w3-input w3-border"  oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
+          </p>
+
+          <p>
+            <label><b>LASTNAME</b></label>
+            <input type="text" name="lastname" value="{{ edit_student['lastname'] if edit_student else '' }}" class="w3-input w3-border" oninput="this.value = this.value.replace(/[^A-Za-z\s]/g, '');" required>
+          </p>
+
+          <p>
+            <label><b>FIRSTNAME</b></label>
+            <input type="text" name="firstname" value="{{ edit_student['firstname'] if edit_student else '' }}" class="w3-input w3-border" oninput="this.value = this.value.replace(/[^A-Za-z\s]/g, '');" required>
+          </p>
+
+          <p>
+            <label><b>COURSE</b></label>
+            <select name="course" class="w3-input w3-border" required>
+              <option value="" disabled>Select a course</option>
+              <option value="bsit" {% if edit_student and edit_student['course']=='bsit' %}selected{% endif %}>IT</option>
+              <option value="bscpe" {% if edit_student and edit_student['course']=='bscpe' %}selected{% endif %}>Computer Engineering</option>
+              <option value="bscs" {% if edit_student and edit_student['course']=='bscs' %}selected{% endif %}>Computer Science</option>
+              <option value="bscJ" {% if edit_student and edit_student['course']=='bscJ' %}selected{% endif %}>Criminal Justice</option>
+            </select>
+          </p>
+
+          <p>
+            <label><b>LEVEL</b></label>
+            <select name="level" class="w3-input w3-border" required>
+              <option value="" disabled>Select a level</option>
+              <option value="1" {% if edit_student and edit_student['level']=='1' %}selected{% endif %}>First Year</option>
+              <option value="2" {% if edit_student and edit_student['level']=='2' %}selected{% endif %}>Second Year</option>
+              <option value="3" {% if edit_student and edit_student['level']=='3' %}selected{% endif %}>Third Year</option>
+              <option value="4" {% if edit_student and edit_student['level']=='4' %}selected{% endif %}>Fourth Year</option>
+            </select>
+          </p>
+
+          <p>
+            <label><b>PICTURE</b></label>
+            <input type="file" name="picture" accept="image/*" {% if not edit_student %}required{% endif %}>
+          </p>
+
+          <!-- Webcam Capture -->
+          <p>
+            <label><b>CAPTURE WITH WEBCAM</b></label><br>
+            <video id="video" width="150" height="150" autoplay></video><br>
+            <button type="button" onclick="capture()" class="w3-button w3-orange">Capture</button>
+          </p>
+
+          <p class="w3-right">
+            <input type="submit" value="SAVE" class="w3-button w3-blue">
+            <input type="reset" value="CANCEL" class="w3-button w3-green">
+          </p>
+
+        </form>
+      </fieldset>
+
+    </div>
+  </div>
+
+  <!-- RIGHT SIDE: STUDENT LIST TABLE -->
+  <div class="w3-twothird w3-container">
+
+    <table class="w3-table-all w3-card-4">
+      <tr>
+        <th>IDNO</th>
+        <th>LASTNAME</th>
+        <th>FIRSTNAME</th>
+        <th>COURSE</th>
+        <th>LEVEL</th>
+        <th>PHOTO</th>
+        <th>ACTION</th>
+      </tr>
+
+      {% for student in studentlist %}
+      <tr>
+        <td>{{ student['idno'] }}</td>
+        <td>{{ student['lastname'].upper() }}</td>
+        <td>{{ student['firstname'].upper() }}</td>
+        <td>{{ student['course'].upper() }}</td>
+        <td>{{ student['level'] }}</td>
+        <td>
+          {% if student['image'] %}
+            <img src="{{ url_for('static', filename='uploads/' ~ student['image']) }}" width="50" height="50">
+          {% else %}
+            <img src="{{ url_for('static', filename='images/account.png') }}" width="50" height="50">
+          {% endif %}
+        </td>
+        <td>
+          <a href="{{ url_for('edit_student', idno=student['idno']) }}">
+            <button>&#128393;</button>
+          </a>
+          <form method="POST" action="{{ url_for('delete_student', idno=student['idno']) }}" style="display:inline;">
+            <button onclick="return confirm('Are you sure?');">&#128465;</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+
+  </div>
+
+</div>
+
+<script>
+  const video = document.getElementById('video');
+  const snapshot = document.getElementById('snapshot');
+
+  // Request webcam access
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => { video.srcObject = stream; })
+    .catch(err => console.error("Webcam error:", err));
+
+  function capture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    snapshot.src = canvas.toDataURL('image/png');
+
+    // Convert to Blob and attach to file input
+    canvas.toBlob(function(blob) {
+      const fileInput = document.querySelector('input[name="picture"]');
+      const container = new DataTransfer();
+      container.items.add(new File([blob], "webcam.png", {type: "image/png"}));
+      fileInput.files = container.files;
+    }, 'image/png');
+  }
+</script>
+
+{% endblock %}
