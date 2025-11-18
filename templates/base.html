@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+	<head>
+			<meta charset="utf-8">
+			<meta http-equiv="X-UA-Compatible" content="ie-edge">
+			<meta name="viewport" content="width=device-with,initial-scale=1.0">
+			<link rel="stylesheet" href="{{url_for('static',filename='css/w3.css')}}">
+			<title>Student Management v1.0</title>
+	</head>
+	<body>
+		<div class="w3-bar w3-container w3-indigo" style="position:sticky;top:0">
+			<h4>Student Management v1.0</h4>
+		</div>
+		<div>
+			{% block content %}
+			{% endblock%}
+		</div>
+		<center> 
+			&copy; Jerson A. Villegas,  2025
+		</center>
+	
+	</body>
+
+</html>
